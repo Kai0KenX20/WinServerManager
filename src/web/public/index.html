@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WinServerManager</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Login Modal -->
+    <div id="loginModal" class="modal">
+        <div class="modal-content">
+            <h2><i class="fas fa-server"></i> WinServerManager</h2>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" name="username" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+                <button type="submit">Login</button>
+            </form>
+            <div id="loginError" class="error-message" style="display: none;"></div>
+        </div>
+    </div>
+
+    <!-- Main Application -->
+    <div id="app" style="display: none;">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-left">
+                <h1><i class="fas fa-server"></i> WinServerManager</h1>
+                <div class="connection-status">
+                    <span id="connectionStatus" class="status-indicator offline">
+                        <i class="fas fa-circle"></i> Connecting...
+                    </span>
+                </div>
+            </div>
+            <div class="header-right">
+                <div class="user-menu">
+                    <span id="currentUser">Admin</span>
+                    <button id="logoutBtn" class="btn btn-secondary">
+                        <i class="fas fa-sign-out-alt"></i> Logout
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <nav class="nav-menu">
+                <a href="#dashboard" class="nav-item active">
+                    <i class="fas fa-tachometer-alt"></i> Dashboard
+                </a>
+                <a href="#servers" class="nav-item">
+                    <i class="fas fa-server"></i> Servers
+                </a>
+                <a href="#system" class="nav-item">
+                    <i class="fas fa-chart-line"></i> System
+                </a>
+                <a href="#backups" class="nav-item">
+                    <i class="fas fa-archive"></i> Backups
+                </a>
+                <a href="#logs" class="nav-item">
+                    <i class="fas fa-file-alt"></i> Logs
+                </a>
+                <a href="#users" class="nav-item admin-only">
+                    <i class="fas fa-users"></i> Users
+                </a>
+                <a href="#settings" class="nav-item">
+                    <i class="fas fa-cog"></i> Settings
+                </a>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Dashboard View -->
+            <div id="dashboardView" class="view active">
+                <div class="page-header">
+                    <h2>Dashboard</h2>
+                    <div class="page-actions">
+                        <button id="refreshBtn" class="btn btn-secondary">
+                            <i class="fas fa-sync-alt"></i> Refresh
+                        </button>
+                        <button id="createServerBtn" class="btn btn-primary">
+                            <i class="fas fa-plus"></i> Create Server
+                        </button>
+                    </div>
+                </div>
+
+                <!-- System Stats Cards -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-server"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3 id="totalServers">0</h3>
+                            <p>Total Servers</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon running">
+                            <i class="fas fa-play-circle"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3 id="runningServers">0</h3>
+                            <p>Running</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-archive"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3 id="totalBackups">0</h3>
+                            <p>Backups</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon alert">
+                            <i class="fas fa-exclamation-triangle"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3 id="recentAlerts">0</h3>
+                            <p>Alerts (1h)</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- System Metrics -->
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <h3>CPU Usage</h3>
+                        <div class="progress-bar">
+                            <div id="cpuProgress" class="progress-fill" style="width: 0%"></div>
+                        </div>
+                        <span id="cpuText">0%</span>
+                    </div>
+                    <div class="metric-card">
+                        <h3>Memory Usage</h3>
+                        <div class="progress-bar">
+                            <div id="memoryProgress" class="progress-fill" style="width: 0%"></div>
+                        </div>
+                        <span id="memoryText">0 GB / 0 GB</span>
+                    </div>
+                    <div class="metric-card">
+                        <h3>Disk Usage</h3>
+                        <div class="progress-bar">
+                            <div id="diskProgress" class="progress-fill" style="width: 0%"></div>
+                        </div>
+                        <span id="diskText">0 GB / 0 GB</span>
+                    </div>
+                    <div class="metric-card">
+                        <h3>Uptime</h3>
+                        <div class="uptime-display">
+                            <span id="uptimeText">0 days</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Servers -->
+                <div class="section">
+                    <div class="section-header">
+                        <h3>Server Status</h3>
+                        <button id="viewAllServers" class="btn btn-text">View All</button>
+                    </div>
+                    <div id="serversList" class="servers-list">
+                        <!-- Server cards will be populated by JavaScript -->
+                    </div>
+                </div>
+
+                <!-- Recent Alerts -->
+                <div class="section">
+                    <div class="section-header">
+                        <h3>Recent Alerts</h3>
+                        <button id="viewAllAlerts" class="btn btn-text">View All</button>
+                    </div>
+                    <div id="alertsList" class="alerts-list">
+                        <!-- Alerts will be populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Other views will be added here -->
+            <div id="serversView" class="view">
+                <div class="page-header">
+                    <h2>Servers</h2>
+                </div>
+                <p>Servers management view - Coming soon...</p>
+            </div>
+
+            <div id="systemView" class="view">
+                <div class="page-header">
+                    <h2>System Monitoring</h2>
+                </div>
+                <p>System monitoring view - Coming soon...</p>
+            </div>
+
+            <div id="backupsView" class="view">
+                <div class="page-header">
+                    <h2>Backups</h2>
+                </div>
+                <p>Backup management view - Coming soon...</p>
+            </div>
+
+            <div id="logsView" class="view">
+                <div class="page-header">
+                    <h2>System Logs</h2>
+                </div>
+                <p>Logs view - Coming soon...</p>
+            </div>
+
+            <div id="usersView" class="view">
+                <div class="page-header">
+                    <h2>User Management</h2>
+                </div>
+                <p>User management view - Coming soon...</p>
+            </div>
+
+            <div id="settingsView" class="view">
+                <div class="page-header">
+                    <h2>Settings</h2>
+                </div>
+                <p>Settings view - Coming soon...</p>
+            </div>
+        </main>
+    </div>
+
+    <!-- Create Server Modal -->
+    <div id="createServerModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Create New Server</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <form id="createServerForm">
+                <div class="form-group">
+                    <label for="serverName">Server Name</label>
+                    <input type="text" id="serverName" name="name" required>
+                </div>
+                <div class="form-group">
+                    <label for="serverType">Server Type</label>
+                    <select id="serverType" name="type" required>
+                        <option value="">Select a server type</option>
+                        <option value="minecraft-java">Minecraft Java</option>
+                        <option value="minecraft-bedrock">Minecraft Bedrock</option>
+                        <option value="steam-generic">Steam Game</option>
+                        <option value="csgo">Counter-Strike: GO</option>
+                        <option value="ark">ARK: Survival Evolved</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="installPath">Installation Path</label>
+                    <input type="text" id="installPath" name="installPath" required 
+                           placeholder="C:\\GameServers\\MyServer">
+                </div>
+                <div class="form-group">
+                    <label for="serverPort">Port</label>
+                    <input type="number" id="serverPort" name="port" min="1" max="65535" value="25565">
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('createServerModal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Create Server</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
